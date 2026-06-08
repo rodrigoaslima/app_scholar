@@ -143,6 +143,34 @@ back-end/data/app_scholar.sqlite
 
 Esse arquivo nao deve ser versionado.
 
+## Deploy do Back-End no Render Free
+
+O repositorio ja possui um `render.yaml` para criar o servico `app-scholar-api` no Render.
+
+No Render:
+
+1. Crie um novo **Blueprint**.
+2. Conecte este repositorio do GitHub.
+3. Confirme a criacao do servico.
+4. Aguarde o deploy terminar.
+
+O Render vai usar:
+
+```text
+rootDir: back-end
+buildCommand: npm install
+startCommand: npm start
+```
+
+No plano gratuito, o SQLite fica no filesystem temporario do servico. Se o servico reiniciar, redeployar ou trocar de instancia, os dados podem sumir. O `npm start` roda o seed antes de iniciar a API, entao o banco volta com usuarios e dados de teste quando for recriado.
+
+Depois do deploy, use a URL publica do Render no mobile:
+
+```bash
+cd mobile
+EXPO_PUBLIC_API_URL=https://SUA-URL-DO-RENDER/api npm start
+```
+
 ## Scripts Uteis
 
 Back-end:

@@ -25,6 +25,23 @@ A API roda por padrao em:
 http://localhost:3333/api
 ```
 
+## Deploy no Render Free
+
+O deploy esta configurado no arquivo `../render.yaml`.
+
+Configuracao usada:
+
+```text
+rootDir: back-end
+buildCommand: npm install
+startCommand: npm start
+healthCheckPath: /api/health
+```
+
+O script `npm start` executa `npm run init-db` antes de iniciar o servidor. Isso garante que, no Render Free, o SQLite seja recriado com dados de teste quando o filesystem temporario for apagado.
+
+Observacao: sem persistent disk, o arquivo `data/app_scholar.sqlite` nao e um banco permanente em producao. Ele serve bem para demonstracao.
+
 ## Usuarios de teste
 
 Criados por `npm run init-db`:
@@ -76,6 +93,7 @@ Authorization: Bearer <token>
 
 ### Professor
 
+- `GET /api/professor/cursos`
 - `GET /api/professor/disciplinas`
 - `GET /api/professor/disciplinas/:disciplinaId/alunos`
 - `POST /api/professor/notas`

@@ -5,8 +5,12 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js",
+    "start": "npm run init-db && node server.js",
+    "serve": "node server.js",
     "init-db": "node database/seed.js"
+  },
+  "engines": {
+    "node": ">=20.19.4"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
