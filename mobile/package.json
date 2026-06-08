@@ -7,6 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:apk": "eas build -p android --profile preview",
     "backend:install": "npm --prefix ../back-end install",
     "backend:init": "npm --prefix ../back-end run init-db",
     "backend:start": "npm --prefix ../back-end start",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "eas-cli": "^20.1.0",
     "typescript": "~5.9.2"
   },
   "private": true
