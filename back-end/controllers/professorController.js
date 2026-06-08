@@ -56,6 +56,31 @@ async function listMyDisciplines(req, res, next) {
   }
 }
 
+async function listMyCourses(req, res, next) {
+  try {
+    const db = await getDb();
+    const professor = await getProfessorProfile(req.user.id);
+
+    if (!professor) {
+      res.json({ cursos: [] });
+      return;
+    }
+
+    const cursos = await db.all(
+      `SELECT c.id, c.nome
+       FROM professor_cursos pc
+       INNER JOIN cursos c ON c.id = pc.curso_id
+       WHERE pc.professor_id = ?
+       ORDER BY c.nome`,
+      professor.id
+    );
+
+    res.json({ cursos });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function listDisciplineStudents(req, res, next) {
   try {
     const db = await getDb();
@@ -127,4 +152,4 @@ async function upsertGrade(req, res, next) {
   }
 }
 
-module.exports = { listDisciplineStudents, listMyDisciplines, upsertGrade };
+module.exports = { listDisciplineStudents, listMyCourses, listMyDisciplines, upsertGrade };

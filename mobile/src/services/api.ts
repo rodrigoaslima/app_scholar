@@ -238,6 +238,9 @@ export const api = {
   listProfessorDisciplines(token: string) {
     return apiRequest<{ disciplinas: Discipline[] }>('/professor/disciplinas', { token });
   },
+  listProfessorCourses(token: string) {
+    return apiRequest<{ cursos: Course[] }>('/professor/cursos', { token });
+  },
   listDisciplineStudents(token: string, disciplinaId: number) {
     return apiRequest<{ alunos: StudentRecord[] }>(`/professor/disciplinas/${disciplinaId}/alunos`, { token });
   },

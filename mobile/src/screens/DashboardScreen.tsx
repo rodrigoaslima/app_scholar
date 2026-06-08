@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Modal, ScrollView } from 'react-native';
 
 import { AppButton } from '../components/AppButton';
 import { MenuCard } from '../components/MenuCard';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import type { Course, Discipline } from '../types/models';
 import {
+  ModalBackdrop,
+  ModalItem,
+  ModalPanel,
+  ModalTitle,
   SummaryCard,
   SummaryGrid,
   SummaryLabel,
@@ -31,6 +37,9 @@ export function DashboardScreen({ navigate }: Props) {
     professors: 0,
     subjects: 0,
   });
+  const [professorCourses, setProfessorCourses] = useState<Course[]>([]);
+  const [professorDisciplines, setProfessorDisciplines] = useState<Discipline[]>([]);
+  const [detailsModal, setDetailsModal] = useState<'courses' | 'disciplines' | null>(null);
 
   useEffect(() => {
     async function loadSummary() {
@@ -55,8 +64,18 @@ export function DashboardScreen({ navigate }: Props) {
         }
 
         if (user.role === 'professor') {
-          const response = await api.listProfessorDisciplines(token);
-          setSummary({ students: 0, professors: 1, subjects: response.disciplinas.length });
+          const [coursesResponse, disciplinesResponse] = await Promise.all([
+            api.listProfessorCourses(token),
+            api.listProfessorDisciplines(token),
+          ]);
+
+          setProfessorCourses(coursesResponse.cursos);
+          setProfessorDisciplines(disciplinesResponse.disciplinas);
+          setSummary({
+            students: 0,
+            professors: coursesResponse.cursos.length,
+            subjects: disciplinesResponse.disciplinas.length,
+          });
           return;
         }
 
@@ -129,6 +148,10 @@ export function DashboardScreen({ navigate }: Props) {
 
   const isStudent = user?.role === 'aluno';
   const isAdmin = user?.role === 'administrador';
+  const isProfessor = user?.role === 'professor';
+  const modalItems = detailsModal === 'courses'
+    ? professorCourses.map((course) => course.nome)
+    : professorDisciplines.map((discipline) => discipline.nome);
 
   return (
     <ScreenContainer
@@ -137,23 +160,58 @@ export function DashboardScreen({ navigate }: Props) {
       title={isStudent ? 'Painel do aluno' : isAdmin ? 'Painel Administrativo' : 'Painel do Professor'}
     >
       <SummaryGrid>
-        {!isStudent ? (
+        {isProfessor ? (
           <>
-            <SummaryCard>
+            <SummaryCard onPress={() => setDetailsModal('courses')}>
+              <SummaryValue>{professorCourses.length}</SummaryValue>
+              <SummaryLabel>Cursos</SummaryLabel>
+            </SummaryCard>
+            <SummaryCard onPress={() => setDetailsModal('disciplines')}>
+              <SummaryValue>{professorDisciplines.length}</SummaryValue>
+              <SummaryLabel>Disciplinas</SummaryLabel>
+            </SummaryCard>
+          </>
+        ) : null}
+        {!isStudent && !isProfessor ? (
+          <>
+            <SummaryCard disabled>
               <SummaryValue>{summary.students}</SummaryValue>
               <SummaryLabel>{user?.role === 'administrador' ? 'Alunos' : 'Aluno'}</SummaryLabel>
             </SummaryCard>
-            <SummaryCard>
+            <SummaryCard disabled>
               <SummaryValue>{summary.professors}</SummaryValue>
               <SummaryLabel>{user?.role === 'administrador' ? 'Professores' : 'Professor'}</SummaryLabel>
             </SummaryCard>
           </>
         ) : null}
-        <SummaryCard>
-          <SummaryValue>{summary.subjects}</SummaryValue>
-          <SummaryLabel>Materias</SummaryLabel>
-        </SummaryCard>
+        {!isProfessor ? (
+          <SummaryCard disabled>
+            <SummaryValue>{summary.subjects}</SummaryValue>
+            <SummaryLabel>Materias</SummaryLabel>
+          </SummaryCard>
+        ) : null}
       </SummaryGrid>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={Boolean(detailsModal)}
+        onRequestClose={() => setDetailsModal(null)}
+      >
+        <ModalBackdrop onPress={() => setDetailsModal(null)}>
+          <ModalPanel>
+            <ModalTitle>{detailsModal === 'courses' ? 'Cursos' : 'Disciplinas'}</ModalTitle>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {modalItems.length ? (
+                modalItems.map((item) => <ModalItem key={item}>{item}</ModalItem>)
+              ) : (
+                <ModalItem>Nenhum registro vinculado</ModalItem>
+              )}
+            </ScrollView>
+            <AppButton label="Fechar" onPress={() => setDetailsModal(null)} variant="secondary" />
+          </ModalPanel>
+        </ModalBackdrop>
+      </Modal>
 
       {menu.map((item) => (
         <MenuCard
