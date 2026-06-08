@@ -77,10 +77,33 @@ async function seed() {
     `INSERT OR IGNORE INTO disciplinas (id, nome, carga_horaria, curso, semestre, professor_id)
      VALUES (1, ?, ?, ?, ?, ?)`,
     'Programacao Mobile',
-    80,
+    4,
     'Desenvolvimento de Software Multiplataforma',
     '2026.1',
     professor.id
+  );
+  await db.run(
+    `UPDATE disciplinas
+     SET carga_horaria = ?, professor_id = ?
+     WHERE id = ?`,
+    4,
+    professor.id,
+    1
+  );
+  await db.run(
+    'INSERT OR IGNORE INTO curso_disciplinas (curso_id, disciplina_id) VALUES (?, ?)',
+    1,
+    1
+  );
+  await db.run(
+    'INSERT OR IGNORE INTO professor_cursos (professor_id, curso_id) VALUES (?, ?)',
+    professor.id,
+    1
+  );
+  await db.run(
+    'INSERT OR IGNORE INTO professor_disciplinas (professor_id, disciplina_id) VALUES (?, ?)',
+    professor.id,
+    1
   );
   await db.run(
     'INSERT OR IGNORE INTO aluno_disciplinas (aluno_id, disciplina_id) VALUES (?, ?)',

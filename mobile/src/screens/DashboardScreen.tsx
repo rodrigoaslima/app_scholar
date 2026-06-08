@@ -10,9 +10,6 @@ import {
   SummaryGrid,
   SummaryLabel,
   SummaryValue,
-  WelcomePanel,
-  WelcomePanelMeta,
-  WelcomePanelTitle,
 } from './DashboardScreen.styles';
 
 type Props = {
@@ -137,17 +134,8 @@ export function DashboardScreen({ navigate }: Props) {
     <ScreenContainer
       includeTopInset
       subtitle={user ? `Ola, ${user.nome}` : 'Acesse os modulos academicos da plataforma.'}
-      title={isStudent ? 'Painel do aluno' : isAdmin ? 'Painel Administrativo' : 'Dashboard Academico'}
+      title={isStudent ? 'Painel do aluno' : isAdmin ? 'Painel Administrativo' : 'Painel do Professor'}
     >
-      {!isStudent && !isAdmin ? (
-        <WelcomePanel>
-          <WelcomePanelTitle>Painel do professor</WelcomePanelTitle>
-          <WelcomePanelMeta>
-            Seu acesso esta limitado automaticamente pelo perfil da conta e validado pela API.
-          </WelcomePanelMeta>
-        </WelcomePanel>
-      ) : null}
-
       <SummaryGrid>
         {!isStudent ? (
           <>

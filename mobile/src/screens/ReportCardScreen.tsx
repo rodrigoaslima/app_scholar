@@ -22,7 +22,6 @@ import {
 } from './ReportCardScreen.styles';
 import {
   ActionRow,
-  DataCard,
   DataMeta,
   DataTitle,
   FormHelper,
@@ -51,6 +50,7 @@ export function ReportCardScreen() {
   const [selectedDisciplineId, setSelectedDisciplineId] = useState('');
   const [disciplineStudents, setDisciplineStudents] = useState<StudentRecord[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [loadedStudent, setLoadedStudent] = useState<StudentRecord | null>(null);
   const [nota1, setNota1] = useState('');
   const [nota2, setNota2] = useState('');
   const filteredAdminStudents = useMemo(
@@ -133,15 +133,23 @@ export function ReportCardScreen() {
     setFeedback('');
   }
 
-  async function loadStudentsFromDiscipline() {
-    if (!token || !selectedDisciplineId) {
-      setError('Informe o ID da disciplina.');
+  async function selectProfessorDiscipline(value: string) {
+    setSelectedDisciplineId(value);
+    setSelectedStudentId('');
+    setDisciplineStudents([]);
+    setLoadedStudent(null);
+    setNota1('');
+    setNota2('');
+    setError('');
+    setFeedback('');
+
+    if (!token || !value) {
       return;
     }
 
     try {
       setIsLoading(true);
-      const response = await api.listDisciplineStudents(token, Number(selectedDisciplineId));
+      const response = await api.listDisciplineStudents(token, Number(value));
       setDisciplineStudents(response.alunos);
       setError('');
     } catch (studentsError) {
@@ -151,21 +159,58 @@ export function ReportCardScreen() {
     }
   }
 
+  function selectProfessorStudent(value: string) {
+    setSelectedStudentId(value);
+    setLoadedStudent(null);
+    setNota1('');
+    setNota2('');
+    setError('');
+    setFeedback('');
+  }
+
+  function loadSelectedStudent() {
+    if (!selectedDisciplineId) {
+      setError('Selecione a disciplina.');
+      return;
+    }
+
+    if (!selectedStudentId) {
+      setError('Selecione o aluno.');
+      return;
+    }
+
+    const student = disciplineStudents.find((item) => String(item.id) === selectedStudentId);
+
+    if (!student) {
+      setError('Aluno nao encontrado para esta disciplina.');
+      return;
+    }
+
+    setLoadedStudent(student);
+    setNota1(student.nota1 === null || student.nota1 === undefined ? '' : String(student.nota1));
+    setNota2(student.nota2 === null || student.nota2 === undefined ? '' : String(student.nota2));
+    setError('');
+    setFeedback('');
+  }
+
   async function saveGrade() {
-    if (!token || !selectedDisciplineId || !selectedStudentId || !nota1 || !nota2) {
+    if (!token || !selectedDisciplineId || !loadedStudent || !nota1 || !nota2) {
       setError('Informe disciplina, aluno e as duas notas.');
       return;
     }
 
     try {
       await api.saveGrade(token, {
-        aluno_id: Number(selectedStudentId),
+        aluno_id: Number(loadedStudent.id),
         disciplina_id: Number(selectedDisciplineId),
         nota1: Number(nota1),
         nota2: Number(nota2),
       });
       setFeedback('Notas salvas com sucesso.');
-      await loadStudentsFromDiscipline();
+      const response = await api.listDisciplineStudents(token, Number(selectedDisciplineId));
+      const updatedStudent = response.alunos.find((student) => student.id === loadedStudent.id);
+      setDisciplineStudents(response.alunos);
+      setLoadedStudent(updatedStudent || loadedStudent);
     } catch (gradeError) {
       setError(gradeError instanceof Error ? gradeError.message : 'Nao foi possivel salvar notas.');
     }
@@ -270,31 +315,51 @@ export function ReportCardScreen() {
 
           {professorDisciplines.length ? (
             <FormSection>
-              <FormHelper>Informe o ID da disciplina vinculada para listar alunos e lancar notas.</FormHelper>
-              {professorDisciplines.map((discipline) => (
-                <DataMeta key={discipline.id}>
-                  ID {discipline.id}: {discipline.nome} - {discipline.semestre}
-                </DataMeta>
-              ))}
-              <AppTextInput keyboardType="numeric" label="ID da disciplina" onChangeText={setSelectedDisciplineId} value={selectedDisciplineId} />
-              <AppButton label="Carregar alunos" onPress={loadStudentsFromDiscipline} variant="secondary" />
+              <FormHelper>Selecione a disciplina e depois o aluno para lancar ou alterar notas.</FormHelper>
+              <AppSelect
+                label="Disciplina"
+                onChange={selectProfessorDiscipline}
+                options={professorDisciplines.map((discipline) => ({
+                  label: `${discipline.nome}/${discipline.carga_horaria} horas semanais`,
+                  value: String(discipline.id),
+                }))}
+                placeholder="Selecione a disciplina"
+                value={selectedDisciplineId}
+              />
+              <AppSelect
+                disabled={!selectedDisciplineId}
+                label="Aluno"
+                onChange={selectProfessorStudent}
+                options={disciplineStudents.map((student) => ({
+                  label: `${student.nome || student.name} - RA ${student.matricula || student.id}`,
+                  value: String(student.id),
+                }))}
+                placeholder={
+                  selectedDisciplineId
+                    ? disciplineStudents.length
+                      ? 'Selecione o aluno'
+                      : 'Nenhum aluno nesta disciplina'
+                    : 'Selecione a disciplina primeiro'
+                }
+                value={selectedStudentId}
+              />
+              <AppButton
+                disabled={!selectedDisciplineId || !selectedStudentId}
+                label="Carregar aluno"
+                onPress={loadSelectedStudent}
+                variant="secondary"
+              />
             </FormSection>
           ) : null}
 
-          {disciplineStudents.map((student) => (
-            <DataCard key={student.id}>
-              <DataTitle>ID {student.id}: {student.nome || student.name}</DataTitle>
-              <DataMeta>ID do aluno: {student.id}</DataMeta>
-              <DataMeta>
-                Nota 1: {student.nota1 ?? '-'} | Nota 2: {student.nota2 ?? '-'} | Media: {student.media ?? '-'} | Situacao: {student.situacao || 'Pendente'}
-              </DataMeta>
-            </DataCard>
-          ))}
-
-          {professorDisciplines.length ? (
+          {loadedStudent ? (
             <FormSection>
               <FormHelper>Professor pode adicionar ou alterar notas, mas nao pode apagar.</FormHelper>
-              <AppTextInput keyboardType="numeric" label="ID do aluno" onChangeText={setSelectedStudentId} value={selectedStudentId} />
+              <DataTitle>{loadedStudent.nome || loadedStudent.name}</DataTitle>
+              <DataMeta>RA: {loadedStudent.matricula || loadedStudent.id}</DataMeta>
+              <DataMeta>
+                Media: {loadedStudent.media ?? '-'} | Situacao: {loadedStudent.situacao || 'Pendente'}
+              </DataMeta>
               <AppTextInput keyboardType="numeric" label="Nota 1" onChangeText={setNota1} value={nota1} />
               <AppTextInput keyboardType="numeric" label="Nota 2" onChangeText={setNota2} value={nota2} />
               <ActionRow>
