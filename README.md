@@ -2,6 +2,36 @@
 
 App Scholar e uma aplicacao academica com app mobile em React Native/Expo e API em Node.js/Express. O sistema separa os perfis de administrador, professor e aluno para gerenciar cursos, disciplinas, professores, alunos, vinculos academicos e boletins.
 
+## Aplicativo Online
+
+O back-end ja esta publicado no Render:
+
+```text
+https://app-scholar-api.onrender.com/api
+```
+
+Teste rapido da API:
+
+```text
+https://app-scholar-api.onrender.com/api/health
+```
+
+A APK Android pode ser instalada pelo build do Expo/EAS:
+
+```text
+https://expo.dev/accounts/roaslima/projects/app-scholar/builds/ef5181c5-7fb7-40f0-9e92-7cc71fac702a
+```
+
+Abra esse link em um dispositivo Android ou escaneie o QR Code da pagina do build para instalar o aplicativo. Essa APK ja esta configurada para usar o back-end online do Render.
+
+Usuarios de teste:
+
+```text
+admin@appscholar.com / 123456
+professor@appscholar.com / 123456
+aluno@appscholar.com / 123456
+```
+
 ## Estrutura do Repositorio
 
 ```text
