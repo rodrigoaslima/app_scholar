@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { AppButton } from '../components/AppButton';
+import { AppMultiSelect } from '../components/AppMultiSelect';
 import { AppSelect } from '../components/AppSelect';
 import { AppTextInput } from '../components/AppTextInput';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -31,6 +32,7 @@ const initialForm: StudentRecord = {
   address: '',
   city: '',
   state: '',
+  disciplina_ids: [],
 };
 
 export function StudentRegistrationScreen() {
@@ -42,6 +44,10 @@ export function StudentRegistrationScreen() {
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const availableDisciplines = useMemo(() => {
+    return courses.find((course) => course.nome === form.course)?.disciplinas || [];
+  }, [courses, form.course]);
+  const selectedDisciplineIds = (form.disciplina_ids || []).map(String);
 
   async function loadStudents() {
     if (!token) {
@@ -83,6 +89,27 @@ export function StudentRegistrationScreen() {
     updateField('phone', formatPhone(value));
   }
 
+  function updateCourse(value: string) {
+    const courseDisciplines = courses.find((course) => course.nome === value)?.disciplinas || [];
+
+    setFeedback('');
+    setError('');
+    setForm((current) => ({
+      ...current,
+      course: value,
+      disciplina_ids: courseDisciplines.map((discipline) => discipline.id),
+    }));
+  }
+
+  function updateDisciplines(values: string[]) {
+    setFeedback('');
+    setError('');
+    setForm((current) => ({
+      ...current,
+      disciplina_ids: [...new Set(values.map(Number).filter(Boolean))],
+    }));
+  }
+
   function resetForm() {
     setEditingStudentId(null);
     setForm(initialForm);
@@ -103,6 +130,7 @@ export function StudentRegistrationScreen() {
       address: student.endereco || student.address || '',
       city: student.cidade || student.city || '',
       state: student.estado || student.state || '',
+      disciplina_ids: student.disciplina_ids || student.disciplinas?.map((discipline) => discipline.id) || [],
     });
   }
 
@@ -115,7 +143,7 @@ export function StudentRegistrationScreen() {
         city: address.localidade,
         state: address.uf,
       }));
-      setFeedback('Endereco preenchido pela ViaCEP.');
+      setFeedback('Endereco preenchido pela consulta de CEP.');
     } catch (addressError) {
       Alert.alert('Erro', 'CEP não encontrado');
       setError(addressError instanceof Error ? addressError.message : 'CEP invalido.');
@@ -130,6 +158,11 @@ export function StudentRegistrationScreen() {
 
     if (!form.name.trim() || !form.email.trim() || !form.course.trim()) {
       setError('Nome, email e curso sao obrigatorios.');
+      return;
+    }
+
+    if (!form.disciplina_ids?.length) {
+      setError('Selecione ao menos uma disciplina para o aluno.');
       return;
     }
 
@@ -217,11 +250,22 @@ export function StudentRegistrationScreen() {
           <AppTextInput label="Senha inicial" onChangeText={(value) => updateField('senha', value)} secureTextEntry value={form.senha} />
         ) : null}
         <AppSelect
-          label="Curso"
-          onChange={(value) => updateField('course', value)}
+          label="Curso do aluno"
+          onChange={updateCourse}
           options={courses.map((course) => ({ label: course.nome, value: course.nome }))}
           placeholder={courses.length ? 'Selecione um curso' : 'Carregando cursos...'}
           value={form.course}
+        />
+        <AppMultiSelect
+          disabled={!form.course || !availableDisciplines.length}
+          label="Disciplinas"
+          onChange={updateDisciplines}
+          options={availableDisciplines.map((discipline) => ({
+            label: discipline.nome,
+            value: String(discipline.id),
+          }))}
+          placeholder={form.course ? 'Selecione as disciplinas' : 'Escolha um curso primeiro'}
+          values={selectedDisciplineIds}
         />
         <AppTextInput keyboardType="phone-pad" label="Telefone" onChangeText={updatePhone} value={form.phone} />
         <AppTextInput keyboardType="numeric" label="CEP" onChangeText={(value) => updateField('cep', value)} value={form.cep} />

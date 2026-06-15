@@ -1,43 +1,15 @@
 # App Scholar
 
-App Scholar e uma aplicacao academica com app mobile em React Native/Expo e API em Node.js/Express. O sistema separa os perfis de administrador, professor e aluno para gerenciar cursos, disciplinas, professores, alunos, vinculos academicos e boletins.
+App Scholar e uma aplicacao academica com app mobile em React Native/Expo e API local em Node.js/Express. O sistema separa os perfis de administrador, professor e aluno para gerenciar cursos, disciplinas, professores, alunos, vinculos academicos e boletins.
 
-## Aplicativo Online
+Este projeto esta preparado para rodar localmente. Nao ha configuracao de deploy, Render, EAS ou API publica propria no repositorio. A unica integracao externa mantida e a consulta de CEP pela API publica ViaCEP.
 
-O back-end ja esta publicado no Render:
-
-```text
-https://app-scholar-api.onrender.com/api
-```
-
-Teste rapido da API:
+## Estrutura
 
 ```text
-https://app-scholar-api.onrender.com/api/health
-```
-
-A APK Android pode ser instalada pelo build do Expo/EAS:
-
-```text
-https://expo.dev/accounts/roaslima/projects/app-scholar/builds/ef5181c5-7fb7-40f0-9e92-7cc71fac702a
-```
-
-Abra esse link em um dispositivo Android ou escaneie o QR Code da pagina do build para instalar o aplicativo. Essa APK ja esta configurada para usar o back-end online do Render.
-
-Usuarios de teste:
-
-```text
-admin@appscholar.com / 123456
-professor@appscholar.com / 123456
-aluno@appscholar.com / 123456
-```
-
-## Estrutura do Repositorio
-
-```text
-App_scholar/
-  mobile/     Aplicativo React Native com Expo
+app_scholar/
   back-end/   API REST Node.js + Express + SQLite
+  mobile/     Aplicativo React Native com Expo
 ```
 
 ## Requisitos
@@ -52,36 +24,15 @@ Com `nvm`:
 nvm use 20.19.4
 ```
 
-## Instalar Dependencias
+## Preparar Tudo
 
-Instale as dependencias do back-end:
-
-```bash
-cd back-end
-npm install
-```
-
-Instale as dependencias do mobile:
+Na raiz do projeto:
 
 ```bash
-cd ../mobile
-npm install --legacy-peer-deps
+npm run setup:local
 ```
 
-## Configurar o Back-End
-
-Crie o arquivo de ambiente:
-
-```bash
-cd back-end
-cp .env.example .env
-```
-
-Inicialize o banco SQLite com dados de teste:
-
-```bash
-npm run init-db
-```
+Esse comando instala as dependencias do back-end, instala as dependencias do mobile e inicializa o SQLite local.
 
 Usuarios criados pelo seed:
 
@@ -91,11 +42,12 @@ professor@appscholar.com / 123456
 aluno@appscholar.com / 123456
 ```
 
-## Rodar o Back-End
+## Rodar Local
+
+Terminal 1, na raiz:
 
 ```bash
-cd back-end
-npm start
+npm run api
 ```
 
 A API roda por padrao em:
@@ -104,26 +56,70 @@ A API roda por padrao em:
 http://localhost:3333/api
 ```
 
-## Rodar o Mobile
-
-Em outro terminal:
+Terminal 2, na raiz:
 
 ```bash
-cd mobile
-npm start
+npm run mobile
 ```
 
-Para abrir no navegador:
+Se estiver usando celular fisico, mantenha computador e celular na mesma rede. O app tenta descobrir o IP do host pelo Expo. Se precisar forcar a URL da API local:
 
 ```bash
-npm run web
+EXPO_PUBLIC_API_URL=http://SEU_IP:3333/api npm run mobile
 ```
 
-Se estiver usando celular fisico, mantenha computador e celular na mesma rede. O app tenta descobrir o IP do host pelo Expo. Se precisar forcar a URL da API:
+Para Android/emulador:
 
 ```bash
-EXPO_PUBLIC_API_URL=http://SEU_IP:3333/api npm start
+npm run mobile:android
 ```
+
+## Scripts Uteis
+
+```bash
+npm run setup:local
+npm run api
+npm run api:dev
+npm run mobile
+npm run mobile:android
+npm run check
+```
+
+## Banco De Dados
+
+O banco padrao e SQLite e fica em:
+
+```text
+back-end/data/app_scholar.sqlite
+```
+
+Esse arquivo nao deve ser versionado.
+
+Para recriar ou completar os dados de teste:
+
+```bash
+npm --prefix back-end run init-db
+```
+
+## CEP
+
+O mobile consulta CEP pela API local:
+
+```text
+GET /api/cep/:cep
+```
+
+A API local consulta a ViaCEP e devolve o endereco para o mobile. Se a ViaCEP estiver indisponivel, o back-end tenta uma pequena base local em `back-end/data/localCep.js` para CEPs de teste:
+
+```text
+01001000
+01310930
+20040002
+30140071
+70040900
+```
+
+Para CEPs fora dessa lista, se a consulta externa estiver indisponivel, preencha endereco, cidade e estado manualmente no formulario.
 
 ## Funcionalidades
 
@@ -152,71 +148,3 @@ EXPO_PUBLIC_API_URL=http://SEU_IP:3333/api npm start
 - Visualiza suas materias.
 - Visualiza notas e situacao no boletim.
 - Usa RA gerado a partir do ID do banco.
-
-## CEP
-
-O mobile consulta CEP pela API local:
-
-```text
-GET /api/cep/:cep
-```
-
-O back-end consulta a ViaCEP e devolve os dados para o app.
-
-## Banco de Dados
-
-O banco padrao e SQLite e fica em:
-
-```text
-back-end/data/app_scholar.sqlite
-```
-
-Esse arquivo nao deve ser versionado.
-
-## Deploy do Back-End no Render Free
-
-O repositorio ja possui um `render.yaml` para criar o servico `app-scholar-api` no Render.
-
-No Render:
-
-1. Crie um novo **Blueprint**.
-2. Conecte este repositorio do GitHub.
-3. Confirme a criacao do servico.
-4. Aguarde o deploy terminar.
-
-O Render vai usar:
-
-```text
-rootDir: back-end
-buildCommand: npm install
-startCommand: npm start
-```
-
-No plano gratuito, o SQLite fica no filesystem temporario do servico. Se o servico reiniciar, redeployar ou trocar de instancia, os dados podem sumir. O `npm start` roda o seed antes de iniciar a API, entao o banco volta com usuarios e dados de teste quando for recriado.
-
-Depois do deploy, use a URL publica do Render no mobile:
-
-```bash
-cd mobile
-EXPO_PUBLIC_API_URL=https://SUA-URL-DO-RENDER/api npm start
-```
-
-## Scripts Uteis
-
-Back-end:
-
-```bash
-cd back-end
-npm run init-db
-npm start
-npm run dev
-```
-
-Mobile:
-
-```bash
-cd mobile
-npm start
-npm run web
-npm run typecheck
-```

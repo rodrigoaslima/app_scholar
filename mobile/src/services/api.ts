@@ -7,8 +7,10 @@ import type {
   Discipline,
   GradePayload,
   LoginPayload,
+  NoticeFeedItem,
   RegisterPayload,
   StudentRecord,
+  MessageRecord,
   ProfessorRecord,
   SubjectRecord,
 } from '../types/models';
@@ -140,6 +142,7 @@ export const api = {
         endereco: payload.endereco || payload.address,
         cidade: payload.cidade || payload.city,
         estado: payload.estado || payload.state,
+        disciplina_ids: payload.disciplina_ids,
       }),
     });
   },
@@ -156,6 +159,7 @@ export const api = {
         endereco: payload.endereco || payload.address,
         cidade: payload.cidade || payload.city,
         estado: payload.estado || payload.state,
+        disciplina_ids: payload.disciplina_ids,
       }),
     });
   },
@@ -251,6 +255,25 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  createMessage(token: string, texto: string) {
+    return apiRequest<{ mensagem: string; msg: { id: number; texto: string; usuario_id: number } }>('/msg', {
+      method: 'POST',
+      token,
+      body: JSON.stringify({ texto }),
+    });
+  },
+  countMyMessages(token: string) {
+    return apiRequest<{ total: number }>('/msg/count', { token });
+  },
+  listMyMessages(token: string) {
+    return apiRequest<{ msgs: MessageRecord[] }>('/msg', { token });
+  },
+  listAdminMessages() {
+    return apiRequest<{ avisos: NoticeFeedItem[] }>('/msg/admin');
+  },
+  listStudentMessages(token: string) {
+    return apiRequest<{ avisos: NoticeFeedItem[] }>('/msg/aluno', { token });
+  },
   listMySubjects(token: string) {
     return apiRequest<{ disciplinas: Discipline[] }>('/aluno/materias', { token });
   },
@@ -274,16 +297,4 @@ export async function fetchAddressByCep(cep: string) {
     localidade: string;
     uf: string;
   }>(`/cep/${cleanCep}`);
-}
-
-export async function fetchStates() {
-  const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
-  return response.json() as Promise<Array<{ id: number; nome: string; sigla: string }>>;
-}
-
-export async function fetchCitiesByState(uf: string) {
-  const response = await fetch(
-    `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`
-  );
-  return response.json() as Promise<Array<{ id: number; nome: string }>>;
 }

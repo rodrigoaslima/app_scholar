@@ -1,24 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Alert, useWindowDimensions } from 'react-native';
+import { Alert } from 'react-native';
 
 import { AppButton } from '../components/AppButton';
 import { AppTextInput } from '../components/AppTextInput';
-import { ApiError } from '../services/api';
+import { NoticeCarousel } from '../components/NoticeCarousel';
+import { api, ApiError } from '../services/api';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { useAuth } from '../hooks/useAuth';
+import type { NoticeFeedItem } from '../types/models';
 import {
   ErrorBanner,
   FormCard,
   FormSubtitle,
   FormTitle,
-  NewsBadge,
-  NewsCard,
-  NewsDate,
-  NewsDescription,
-  NewsDot,
-  NewsDots,
-  NewsScroll,
-  NewsTitle,
 } from './LoginScreen.styles';
 
 type LoginErrors = {
@@ -32,42 +26,12 @@ type Props = {
 
 export function LoginScreen({ onRegisterPress }: Props) {
   const { login } = useAuth();
-  const { width } = useWindowDimensions();
   const [credential, setCredential] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginErrors>({});
-  const [activeNewsIndex, setActiveNewsIndex] = useState(0);
+  const [newsItems, setNewsItems] = useState<NoticeFeedItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-
-  const newsItems = [
-    {
-      id: '1',
-      badge: 'Comunicado',
-      title: 'Periodo de rematricula para o semestre 2026.2 sera aberto na proxima semana.',
-      description:
-        'Os alunos deverao atualizar dados cadastrais e acompanhar a liberacao das disciplinas diretamente pelo sistema academico.',
-      date: 'Atualizado hoje',
-    },
-    {
-      id: '2',
-      badge: 'Academico',
-      title: 'Acompanhamento de notas agora respeita perfis de aluno, professor e administrador.',
-      description:
-        'Cada usuario acessa apenas os recursos permitidos pela sua funcao institucional.',
-      date: 'Controle por perfil',
-    },
-    {
-      id: '3',
-      badge: 'Secretaria',
-      title: 'Cadastros iniciais podem ser criados diretamente pelo aplicativo.',
-      description:
-        'O primeiro acesso esta liberado para registro de aluno, professor ou administrador.',
-      date: 'Cadastro aberto',
-    },
-  ];
-
-  const newsCardWidth = Math.max(width - 32, 280);
 
   useEffect(() => {
     if (credential.trim() && password.trim()) {
@@ -75,6 +39,12 @@ export function LoginScreen({ onRegisterPress }: Props) {
       setFormError('');
     }
   }, [credential, password]);
+
+  useEffect(() => {
+    api.listAdminMessages()
+      .then((response) => setNewsItems(response.avisos))
+      .catch(() => setNewsItems([]));
+  }, []);
 
   async function handleLogin() {
     const nextErrors: LoginErrors = {};
@@ -117,32 +87,7 @@ export function LoginScreen({ onRegisterPress }: Props) {
       includeTopInset
       title="App Scholar"
     >
-      <NewsScroll
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(event) => {
-          const index = Math.round(
-            event.nativeEvent.contentOffset.x / newsCardWidth
-          );
-          setActiveNewsIndex(index);
-        }}
-      >
-        {newsItems.map((item) => (
-          <NewsCard key={item.id} style={{ width: newsCardWidth }}>
-            <NewsBadge>{item.badge}</NewsBadge>
-            <NewsTitle>{item.title}</NewsTitle>
-            <NewsDescription>{item.description}</NewsDescription>
-            <NewsDate>{item.date}</NewsDate>
-          </NewsCard>
-        ))}
-      </NewsScroll>
-
-      <NewsDots>
-        {newsItems.map((item, index) => (
-          <NewsDot key={item.id} $active={index === activeNewsIndex} />
-        ))}
-      </NewsDots>
+      <NoticeCarousel items={newsItems} />
 
       <FormCard>
         <FormTitle>Autenticacao</FormTitle>

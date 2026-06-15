@@ -6,7 +6,13 @@ const { findUserByEmail, findUserById, getProfileByUser } = require('../models/u
 const { ensureCourseExists } = require('../utils/courses');
 const { httpError } = require('../utils/httpError');
 const { saveProfessorLinks } = require('../utils/professors');
-const { createStudentProfile } = require('../utils/students');
+const {
+  createStudentProfile,
+  getCourseDisciplineIds,
+  normalizeDisciplineIds,
+  saveStudentDisciplineLinks,
+  validateStudentDisciplineIds,
+} = require('../utils/students');
 
 const VALID_ROLES = ['aluno', 'professor', 'administrador'];
 
@@ -69,7 +75,12 @@ async function register(req, res, next) {
     }
 
     if (role === 'aluno') {
+      const requestedDisciplineIds = normalizeDisciplineIds(disciplina_ids);
       await ensureCourseExists(db, curso);
+      const disciplineIds = requestedDisciplineIds.length
+        ? requestedDisciplineIds
+        : await getCourseDisciplineIds(db, curso);
+      await validateStudentDisciplineIds(db, curso, disciplineIds);
     }
 
     if (role === 'professor' && !titulacao) {
@@ -90,7 +101,11 @@ async function register(req, res, next) {
     const usuarioId = result.lastID;
 
     if (role === 'aluno') {
-      await createStudentProfile(db, {
+      const requestedDisciplineIds = normalizeDisciplineIds(disciplina_ids);
+      const disciplineIds = requestedDisciplineIds.length
+        ? requestedDisciplineIds
+        : await getCourseDisciplineIds(db, curso);
+      const alunoId = await createStudentProfile(db, {
         usuarioId,
         curso,
         telefone,
@@ -99,6 +114,7 @@ async function register(req, res, next) {
         cidade,
         estado,
       });
+      await saveStudentDisciplineLinks(db, alunoId, disciplineIds);
     }
 
     if (role === 'professor') {

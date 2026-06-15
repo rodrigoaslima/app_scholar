@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
 const cepRoutes = require('./routes/cepRoutes');
 const courseRoutes = require('./routes/courseRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 const professorRoutes = require('./routes/professorRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 
@@ -24,6 +25,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api', authRoutes);
 app.use('/api', cepRoutes);
 app.use('/api', courseRoutes);
+app.use('/api', messageRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', professorRoutes);
 app.use('/api', studentRoutes);

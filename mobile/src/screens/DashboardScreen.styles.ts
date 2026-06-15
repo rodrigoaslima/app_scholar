@@ -86,3 +86,47 @@ export const ModalItem = styled.Text`
   margin-bottom: ${({ theme }) => theme.spacing.sm}px;
   padding: ${({ theme }) => theme.spacing.md}px;
 `;
+
+export const NoticeTextArea = styled.TextInput.attrs(({ theme }) => ({
+  placeholderTextColor: theme.colors.textMuted,
+  textAlignVertical: 'top',
+}))`
+  background-color: ${({ theme }) => theme.colors.surfaceMuted};
+  border-color: ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md}px;
+  border-width: 1px;
+  color: ${({ theme }) => theme.colors.text};
+  font-family: ${({ theme }) => theme.fonts.body};
+  font-size: ${({ theme }) => theme.typography.bodyLarge}px;
+  min-height: 150px;
+  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
+  padding-vertical: ${({ theme }) => theme.spacing.md}px;
+`;
+
+export const NoticeCounter = styled.Text`
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-family: ${({ theme }) => theme.fonts.bodySemiBold};
+  font-size: ${({ theme }) => theme.typography.caption}px;
+  text-align: right;
+`;
+
+export const NoticeActions = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm}px;
+  justify-content: flex-end;
+  margin-top: ${({ theme }) => theme.spacing.xs}px;
+`;
+
+export const ResultMessage = styled.Text<{ $type: 'success' | 'error' }>`
+  background-color: ${({ theme, $type }) =>
+    $type === 'success' ? theme.colors.successSoft : theme.colors.dangerSoft};
+  border-radius: ${({ theme }) => theme.radius.md}px;
+  color: ${({ theme, $type }) =>
+    $type === 'success' ? theme.colors.success : theme.colors.danger};
+  font-family: ${({ theme }) => theme.fonts.bodySemiBold};
+  font-size: ${({ theme }) => theme.typography.body}px;
+  line-height: 22px;
+  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
+  padding-vertical: 12px;
+`;

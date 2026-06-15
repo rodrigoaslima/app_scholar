@@ -54,6 +54,11 @@ export function RegisterScreen({ onDone }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedProfessorCourseIds = form.curso_ids.map(String);
   const selectedProfessorDisciplineIds = form.disciplina_ids.map(String);
+  const selectedStudentDisciplineIds = form.disciplina_ids.map(String);
+  const availableStudentDisciplines = useMemo(
+    () => courses.find((course) => course.nome === form.curso)?.disciplinas || [],
+    [courses, form.curso]
+  );
   const availableProfessorDisciplines = useMemo(
     () => getDisciplinesForCourses(courses, selectedProfessorCourseIds),
     [courses, selectedProfessorCourseIds.join(',')]
@@ -77,6 +82,27 @@ export function RegisterScreen({ onDone }: Props) {
 
   function updatePhone(value: string) {
     updateField('telefone', formatPhone(value));
+  }
+
+  function updateStudentCourse(value: string) {
+    const courseDisciplines = courses.find((course) => course.nome === value)?.disciplinas || [];
+
+    setFeedback('');
+    setError('');
+    setForm((current) => ({
+      ...current,
+      curso: value,
+      disciplina_ids: courseDisciplines.map((discipline) => discipline.id),
+    }));
+  }
+
+  function updateStudentDisciplines(values: string[]) {
+    setFeedback('');
+    setError('');
+    setForm((current) => ({
+      ...current,
+      disciplina_ids: [...new Set(values.map(Number).filter(Boolean))],
+    }));
   }
 
   function updateProfessorCourses(values: string[]) {
@@ -116,7 +142,7 @@ export function RegisterScreen({ onDone }: Props) {
         cidade: address.localidade,
         estado: address.uf,
       }));
-      setFeedback('Endereco preenchido pela ViaCEP.');
+      setFeedback('Endereco preenchido pela consulta de CEP.');
     } catch {
       Alert.alert('Erro', 'CEP não encontrado');
       setError('CEP nao encontrado.');
@@ -131,6 +157,11 @@ export function RegisterScreen({ onDone }: Props) {
 
     if (role === 'aluno' && !form.curso.trim()) {
       setError('Curso e obrigatorio para aluno.');
+      return;
+    }
+
+    if (role === 'aluno' && !form.disciplina_ids.length) {
+      setError('Selecione ao menos uma disciplina para aluno.');
       return;
     }
 
@@ -207,11 +238,22 @@ export function RegisterScreen({ onDone }: Props) {
         {role === 'aluno' ? (
           <>
             <AppSelect
-              label="Curso"
-              onChange={(value) => updateField('curso', value)}
+              label="Curso do aluno"
+              onChange={updateStudentCourse}
               options={courses.map((course) => ({ label: course.nome, value: course.nome }))}
               placeholder={courses.length ? 'Selecione um curso' : 'Carregando cursos...'}
               value={form.curso}
+            />
+            <AppMultiSelect
+              disabled={!form.curso || !availableStudentDisciplines.length}
+              label="Disciplinas"
+              onChange={updateStudentDisciplines}
+              options={availableStudentDisciplines.map((discipline) => ({
+                label: discipline.nome,
+                value: String(discipline.id),
+              }))}
+              placeholder={form.curso ? 'Selecione as disciplinas' : 'Escolha um curso primeiro'}
+              values={selectedStudentDisciplineIds}
             />
             <AppTextInput keyboardType="phone-pad" label="Telefone" onChangeText={updatePhone} value={form.telefone} />
             <AppTextInput keyboardType="numeric" label="CEP" onChangeText={(value) => updateField('cep', value)} value={form.cep} />

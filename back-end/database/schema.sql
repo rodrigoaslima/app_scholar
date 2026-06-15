@@ -117,6 +117,14 @@ CREATE TABLE IF NOT EXISTS notas (
   FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS msg (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  texto TEXT NOT NULL CHECK (length(texto) <= 255),
+  usuario_id INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
 CREATE INDEX IF NOT EXISTS idx_alunos_matricula ON alunos(matricula);
 CREATE INDEX IF NOT EXISTS idx_professor_cursos_professor ON professor_cursos(professor_id);
@@ -130,6 +138,7 @@ CREATE INDEX IF NOT EXISTS idx_aluno_disciplinas_aluno ON aluno_disciplinas(alun
 CREATE INDEX IF NOT EXISTS idx_aluno_disciplinas_disciplina ON aluno_disciplinas(disciplina_id);
 CREATE INDEX IF NOT EXISTS idx_notas_aluno ON notas(aluno_id);
 CREATE INDEX IF NOT EXISTS idx_notas_disciplina ON notas(disciplina_id);
+CREATE INDEX IF NOT EXISTS idx_msg_usuario ON msg(usuario_id);
 
 INSERT OR IGNORE INTO professor_disciplinas (professor_id, disciplina_id)
 SELECT professor_id, id

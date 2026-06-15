@@ -1,6 +1,6 @@
 # App Scholar Backend
 
-API REST em Node.js + Express para a Parte 2 do App Scholar.
+API REST local em Node.js + Express para a Parte 2 do App Scholar.
 
 ## Stack
 
@@ -9,7 +9,7 @@ API REST em Node.js + Express para a Parte 2 do App Scholar.
 - SQLite
 - JWT com Bearer token
 
-## Setup
+## Setup Local
 
 ```bash
 cd back-end
@@ -25,24 +25,19 @@ A API roda por padrao em:
 http://localhost:3333/api
 ```
 
-## Deploy no Render Free
+## Ambiente
 
-O deploy esta configurado no arquivo `../render.yaml`.
-
-Configuracao usada:
+Arquivo `.env.example`:
 
 ```text
-rootDir: back-end
-buildCommand: npm install
-startCommand: npm start
-healthCheckPath: /api/health
+PORT=3333
+JWT_SECRET=troque_este_segredo_em_producao
+DB_FILE=./data/app_scholar.sqlite
 ```
 
-O script `npm start` executa `npm run init-db` antes de iniciar o servidor. Isso garante que, no Render Free, o SQLite seja recriado com dados de teste quando o filesystem temporario for apagado.
+Para desenvolvimento local, mantenha `DB_FILE` apontando para `./data/app_scholar.sqlite`.
 
-Observacao: sem persistent disk, o arquivo `data/app_scholar.sqlite` nao e um banco permanente em producao. Ele serve bem para demonstracao.
-
-## Usuarios de teste
+## Usuarios De Teste
 
 Criados por `npm run init-db`:
 
@@ -52,7 +47,25 @@ professor@appscholar.com / 123456
 aluno@appscholar.com / 123456
 ```
 
-## Rotas publicas
+## CEP
+
+Rota:
+
+```text
+GET /api/cep/:cep
+```
+
+A API consulta a ViaCEP e retorna o endereco para o app. Se a ViaCEP estiver indisponivel, a API tenta a base local `data/localCep.js` para CEPs de teste:
+
+```text
+01001000
+01310930
+20040002
+30140071
+70040900
+```
+
+## Rotas Publicas
 
 - `GET /api/health`
 - `GET /api/cep/:cep`
@@ -60,7 +73,7 @@ aluno@appscholar.com / 123456
 - `POST /api/auth/register`
 - `POST /api/login`
 
-## Rotas com token
+## Rotas Com Token
 
 Enviar:
 
@@ -90,6 +103,7 @@ Authorization: Bearer <token>
 - `DELETE /api/disciplinas/:id`
 - `PUT /api/disciplinas/:disciplinaId/professor`
 - `POST /api/disciplinas/:disciplinaId/alunos`
+- `POST /api/msg`
 
 ### Professor
 
@@ -98,6 +112,7 @@ Authorization: Bearer <token>
 - `GET /api/professor/disciplinas/:disciplinaId/alunos`
 - `POST /api/professor/notas`
 - `PUT /api/professor/notas`
+- `POST /api/msg`
 
 ### Aluno
 
@@ -116,3 +131,4 @@ Os principais vinculos academicos ficam em:
 - `professor_disciplinas`: disciplinas vinculadas ao professor.
 - `aluno_disciplinas`: disciplinas vinculadas ao aluno.
 - `notas`: notas e situacao do aluno por disciplina.
+- `msg`: avisos criados por administradores e professores, com texto e usuario que escreveu.

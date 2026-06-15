@@ -1,4 +1,5 @@
 const { httpError } = require('../utils/httpError');
+const { getLocalAddressByCep } = require('../data/localCep');
 
 async function getAddressByCep(req, res, next) {
   try {
@@ -8,15 +9,20 @@ async function getAddressByCep(req, res, next) {
       throw httpError(404, 'CEP não encontrado', 'CEP_NOT_FOUND');
     }
 
-    const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+    let address = null;
 
-    if (!response.ok) {
-      throw httpError(404, 'CEP não encontrado', 'CEP_NOT_FOUND');
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      address = response.ok ? await response.json() : null;
+    } catch {
+      address = null;
     }
 
-    const address = await response.json();
+    if (!address || address.erro) {
+      address = getLocalAddressByCep(cleanCep);
+    }
 
-    if (address.erro) {
+    if (!address || address.erro) {
       throw httpError(404, 'CEP não encontrado', 'CEP_NOT_FOUND');
     }
 

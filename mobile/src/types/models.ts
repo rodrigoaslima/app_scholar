@@ -58,6 +58,8 @@ export type StudentRecord = {
   nota2?: number;
   media?: number;
   situacao?: ReportEntry['status'];
+  disciplinas?: Pick<Discipline, 'id' | 'nome' | 'carga_horaria'>[];
+  disciplina_ids?: number[];
 };
 
 export type ProfessorRecord = {
@@ -121,6 +123,22 @@ export type GradePayload = {
   disciplina_id: number;
   nota1: number;
   nota2: number;
+};
+
+export type MessageRecord = {
+  id: number;
+  texto: string;
+  usuario_id: number;
+  created_at: string;
+  chip?: string;
+};
+
+export type NoticeFeedItem = {
+  id: number;
+  texto: string;
+  usuario_id: number;
+  created_at: string;
+  chip: string;
 };
 
 export type Course = {

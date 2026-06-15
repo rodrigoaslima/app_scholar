@@ -4,7 +4,14 @@ const { getDb } = require('../database/connection');
 const { ensureCourseExists } = require('../utils/courses');
 const { httpError } = require('../utils/httpError');
 const { hydrateProfessorLinks, saveProfessorLinks } = require('../utils/professors');
-const { createStudentProfile } = require('../utils/students');
+const {
+  createStudentProfile,
+  getCourseDisciplineIds,
+  hydrateStudentLinks,
+  normalizeDisciplineIds,
+  saveStudentDisciplineLinks,
+  validateStudentDisciplineIds,
+} = require('../utils/students');
 
 function toBoolean(value) {
   return Boolean(Number(value));
@@ -85,13 +92,18 @@ async function createStudent(req, res, next) {
   const db = await getDb();
 
   try {
-    const { nome, email, senha, curso, telefone, cep, endereco, cidade, estado } = req.body;
+    const { nome, email, senha, curso, telefone, cep, endereco, cidade, estado, disciplina_ids } = req.body;
+    const requestedDisciplineIds = normalizeDisciplineIds(disciplina_ids);
 
     if (!nome || !email || !senha || !curso) {
       throw httpError(400, 'Nome, email, senha e curso sao obrigatorios.', 'VALIDATION_ERROR');
     }
 
     await ensureCourseExists(db, curso);
+    const disciplineIds = requestedDisciplineIds.length
+      ? requestedDisciplineIds
+      : await getCourseDisciplineIds(db, curso);
+    await validateStudentDisciplineIds(db, curso, disciplineIds);
 
     const senhaHash = await bcrypt.hash(senha, 10);
     await db.run('BEGIN');
@@ -102,7 +114,7 @@ async function createStudent(req, res, next) {
       senhaHash,
       'aluno'
     );
-    await createStudentProfile(db, {
+    const alunoId = await createStudentProfile(db, {
       usuarioId: result.lastID,
       curso,
       telefone,
@@ -111,6 +123,7 @@ async function createStudent(req, res, next) {
       cidade,
       estado,
     });
+    await saveStudentDisciplineLinks(db, alunoId, disciplineIds);
     await db.run('COMMIT');
 
     res.status(201).json({ mensagem: 'Aluno cadastrado com sucesso.' });
@@ -130,7 +143,11 @@ async function listStudents(_req, res, next) {
       ORDER BY u.nome
     `);
 
-    res.json({ alunos: alunos.map((aluno) => ({ ...aluno, ativo: toBoolean(aluno.ativo) })) });
+    const hydratedStudents = await Promise.all(
+      alunos.map((aluno) => hydrateStudentLinks(db, aluno))
+    );
+
+    res.json({ alunos: hydratedStudents.map((aluno) => ({ ...aluno, ativo: toBoolean(aluno.ativo) })) });
   } catch (error) {
     next(error);
   }
@@ -140,16 +157,20 @@ async function updateStudent(req, res, next) {
   try {
     const db = await getDb();
     const { id } = req.params;
-    const { nome, email, matricula, curso, telefone, cep, endereco, cidade, estado } = req.body;
+    const { nome, email, matricula, curso, telefone, cep, endereco, cidade, estado, disciplina_ids } = req.body;
+    const requestedDisciplineIds = normalizeDisciplineIds(disciplina_ids);
     const aluno = await db.get('SELECT * FROM alunos WHERE id = ?', id);
 
     if (!aluno) {
       throw httpError(404, 'Aluno nao encontrado.', 'STUDENT_NOT_FOUND');
     }
 
-    if (curso) {
-      await ensureCourseExists(db, curso);
-    }
+    const nextCourse = curso || aluno.curso;
+    await ensureCourseExists(db, nextCourse);
+    const disciplineIds = requestedDisciplineIds.length
+      ? requestedDisciplineIds
+      : await getCourseDisciplineIds(db, nextCourse);
+    await validateStudentDisciplineIds(db, nextCourse, disciplineIds);
 
     await db.run('BEGIN');
     await db.run(
@@ -177,6 +198,7 @@ async function updateStudent(req, res, next) {
       estado || null,
       id
     );
+    await saveStudentDisciplineLinks(db, id, disciplineIds);
     await db.run('COMMIT');
 
     res.json({ mensagem: 'Aluno atualizado com sucesso.' });

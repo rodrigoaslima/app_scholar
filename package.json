@@ -1,0 +1,13 @@
+{
+  "name": "app-scholar-local",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup:local": "npm --prefix back-end install && npm --prefix mobile install --legacy-peer-deps && npm --prefix back-end run init-db",
+    "api": "npm --prefix back-end start",
+    "api:dev": "npm --prefix back-end run dev",
+    "mobile": "npm --prefix mobile start",
+    "mobile:android": "npm --prefix mobile run android",
+    "check": "npm --prefix mobile run typecheck"
+  }
+}
